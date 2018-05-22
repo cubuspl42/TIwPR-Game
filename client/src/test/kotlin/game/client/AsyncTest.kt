@@ -1,8 +1,8 @@
 @file:Suppress("unused")
 
-package com.github.czyzby.example.client
+package game.client
 
-import com.github.czyzby.example.common.getAnswer
+import game.common.getAnswer
 import kotlin.browser.window
 import kotlin.js.Promise
 import kotlin.test.Ignore

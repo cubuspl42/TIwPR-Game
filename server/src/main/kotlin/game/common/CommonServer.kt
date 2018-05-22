@@ -1,4 +1,4 @@
-package com.github.czyzby.example.common
+package game.common
 
 // Caveat: Kotlin file name cannot be the same as the one in common project.
 

@@ -20,7 +20,7 @@ compileKotlin2Js {
         sourceMap = true
         sourceMapEmbedSources = 'always'
         moduleKind = 'umd'
-        main = 'com.github.czyzby.example.client.Main'
+        main = 'game.client.Main'
     }
 }
 

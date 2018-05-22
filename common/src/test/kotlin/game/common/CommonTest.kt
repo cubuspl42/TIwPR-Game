@@ -1,4 +1,4 @@
-package com.github.czyzby.example.common
+package game.common
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

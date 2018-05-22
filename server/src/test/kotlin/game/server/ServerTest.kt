@@ -1,6 +1,6 @@
-package com.github.czyzby.example.server
+package game.server
 
-import com.github.czyzby.example.common.getAnswer
+import game.common.getAnswer
 import org.junit.Assert.assertEquals
 import kotlin.test.Test
 

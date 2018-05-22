@@ -1,4 +1,4 @@
-package com.github.czyzby.example.common
+package game.common
 
 /**
  * Must be implemented by all modules and return the one and only answer Answer to the Ultimate Question of Life,
