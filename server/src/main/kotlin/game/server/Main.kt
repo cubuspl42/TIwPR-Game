@@ -1,9 +1,12 @@
-@file:JvmName("Main")
-
 package game.server
 
-import game.common.getAnswer
+import java.net.InetSocketAddress
+
+
+private const val host = "localhost"
+private const val port = 8887
 
 fun main(args: Array<String>) {
-    println("Hello from JVM! The answer is ${getAnswer()}.")
+    val server = GameServer(InetSocketAddress(host, port))
+    server.run()
 }
