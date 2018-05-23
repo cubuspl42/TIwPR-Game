@@ -1,46 +1,77 @@
 package game.server
 
-import game.common.ClientMessageUnion
-import game.common.HelloMessage
+import game.common.*
 import kotlinx.serialization.json.JSON
 import org.java_websocket.WebSocket
-import org.java_websocket.handshake.ClientHandshake
-import org.java_websocket.server.WebSocketServer
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
+import java.util.concurrent.ConcurrentLinkedQueue
 
+private const val tickrate = 4
 
-class GameServer(address: InetSocketAddress) : WebSocketServer(address) {
-    override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
-        println("new connection to " + conn.remoteSocketAddress)
+sealed class Event
+
+data class ClientConnectedEvent(
+        val clientUuid: String,
+        val socket: WebSocket
+) : Event()
+
+data class ClientMessageEvent(
+        val clientMessage: ClientMessage
+) : Event()
+
+class Client(private val socket: WebSocket) {
+    fun handleMessage(message: ServerMessage) {
+        socket.send(JSON.Companion.stringify(message))
+    }
+}
+
+class GameServer : Runnable {
+    private val clients = mutableSetOf<Client>()
+
+    private val eventQueue = ConcurrentLinkedQueue<Event>()
+
+    private var worldState = WorldState(listOf(Snake(listOf(Vec2i(0, 0)))))
+
+    fun handleEvent(event: Event) {
+        eventQueue.add(event)
     }
 
-    override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
-        println("closed " + conn.remoteSocketAddress + " with exit code " + code + " additional info: " + reason)
-    }
+    override fun run() {
+        while (true) {
+            processEvents()
+            updateWorld()
+            broadcastWorldState()
 
-    override fun onMessage(conn: WebSocket, message: String) {
-        println("received message from " + conn.remoteSocketAddress + ": " + message)
-        JSON.parse<ClientMessageUnion>(message).run {
-            helloMessage?.let { handleHello(it) }
-            clientCommandMessage?.let {}
-            Unit
+            Thread.sleep((1000 / tickrate).toLong())
         }
     }
 
-    override fun onMessage(conn: WebSocket, message: ByteBuffer) {
-        println("received ByteBuffer from " + conn.remoteSocketAddress)
+    private fun processEvents() {
+        generateSequence { eventQueue.poll() }.forEach {
+            processEvent(it)
+        }
     }
 
-    override fun onError(conn: WebSocket?, ex: Exception) {
-        System.err.println("an error occured on connection " + conn?.remoteSocketAddress + ":" + ex)
+    private fun processEvent(event: Event) {
+        when (event) {
+            is ClientConnectedEvent -> {
+                clients.add(Client(event.socket))
+            }
+            is ClientMessageEvent -> {
+                processMessage(event.clientMessage)
+            }
+        }
     }
 
-    override fun onStart() {
-        println("server started successfully")
+    private fun processMessage(message: ClientMessage) {
     }
 
-    private fun handleHello(message: HelloMessage) {
+    private fun updateWorld() {
 
+    }
+
+    private fun broadcastWorldState() {
+        clients.forEach {
+            it.handleMessage(ServerMessage(WorldUpdateMessage(worldState.copy())))
+        }
     }
 }

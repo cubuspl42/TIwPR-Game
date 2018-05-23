@@ -24,7 +24,17 @@ data class ClientCommandMessage(
 )
 
 @Serializable
-data class ClientMessageUnion(
-        val helloMessage: HelloMessage? = null,
-        val clientCommandMessage: ClientCommandMessage? = null
+data class ClientMessage(
+        val hello: HelloMessage? = null,
+        val clientCommand: ClientCommandMessage? = null
+)
+
+@Serializable
+data class WorldUpdateMessage(
+        val worldState: WorldState
+)
+
+@Serializable
+data class ServerMessage(
+        val worldUpdate: WorldUpdateMessage? = null
 )
