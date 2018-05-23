@@ -10,20 +10,22 @@ private const val tickrate = 4
 sealed class Event
 
 data class ClientConnectedEvent(
-        val clientUuid: String,
+        val clientId: Int,
         val socket: WebSocket
 ) : Event()
 
 data class ClientDisconnectedEvent(
-        val socket: WebSocket
+        val clientId: Int
 ) : Event()
 
 data class ClientMessageEvent(
+        val clientId: Int,
         val clientMessage: ClientMessage
 ) : Event()
 
 class Client(
-        val socket: WebSocket
+        val id: Int,
+        private val socket: WebSocket
 ) {
     fun handleMessage(message: ServerMessage) {
         socket.send(JSON.stringify(message))
@@ -60,21 +62,26 @@ class GameServer : Runnable {
     private fun processEvent(event: Event) {
         when (event) {
             is ClientConnectedEvent -> {
-                clients.add(Client(event.socket))
+                val client = Client(event.clientId, event.socket)
+                clients.add(client)
+                world.addSnake(client.id)
             }
             is ClientDisconnectedEvent -> {
-                clients.remove(findClientBySocket(event.socket))
+                clients.remove(findClientById(event.clientId))
             }
             is ClientMessageEvent -> {
-                processMessage(event.clientMessage)
+                processMessage(event.clientId, event.clientMessage)
             }
         }
     }
 
-    private fun findClientBySocket(socket: WebSocket) =
-            clients.first { it.socket == socket }
+    private fun findClientById(id: Int) =
+            clients.first { it.id == id }
 
-    private fun processMessage(message: ClientMessage) {
+    private fun processMessage(clientId: Int, message: ClientMessage) {
+        message.clientCommand?.let {
+            world.controlSnake(clientId, it.direction)
+        }
     }
 
     private fun updateWorld() {

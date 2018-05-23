@@ -3,7 +3,10 @@ package game.server
 import game.common.Vec2i
 import game.common.WsSnake
 
-class Snake(initialPosition: Vec2i) {
+class Snake(
+        initialPosition: Vec2i,
+        val clientId: Int
+) {
     private val _segments = mutableListOf(initialPosition)
 
     val segments: List<Vec2i> = _segments

@@ -9,25 +9,34 @@ import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 
+data class ConnectionState(
+        val clientId: Int
+)
 
 class GameWebSocketServer(
         address: InetSocketAddress,
         private val gameServer: GameServer
 ) : WebSocketServer(address) {
+    private var nextClientId = 0
+
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         println("new connection to " + conn.remoteSocketAddress)
-        gameServer.handleEvent(ClientConnectedEvent("", conn))
+        val clientId = nextClientId++
+        conn.setAttachment(ConnectionState(clientId))
+        gameServer.handleEvent(ClientConnectedEvent(clientId, conn))
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
         println("closed " + conn.remoteSocketAddress + " with exit code " + code + " additional info: " + reason)
-        gameServer.handleEvent(ClientDisconnectedEvent(conn))
+        val connectionState = conn.getAttachment<ConnectionState>()
+        gameServer.handleEvent(ClientDisconnectedEvent(connectionState.clientId))
 
     }
 
     override fun onMessage(conn: WebSocket, message: String) {
         println("received message from " + conn.remoteSocketAddress + ": " + message)
-        gameServer.handleEvent(ClientMessageEvent(JSON.parse(message)))
+        val connectionState = conn.getAttachment<ConnectionState>()
+        gameServer.handleEvent(ClientMessageEvent(connectionState.clientId, JSON.parse(message)))
     }
 
     override fun onMessage(conn: WebSocket, message: ByteBuffer) {
