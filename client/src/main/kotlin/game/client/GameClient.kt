@@ -45,9 +45,9 @@ class GameClient {
             handleMessage(event as MessageEvent)
         }
 
-        socket.onopen = {
-            window.setInterval({ sendCommand() }, 50)
-        }
+//        socket.onopen = {
+//            window.setInterval({ sendCommand() }, 50)
+//        }
 
         fun callback() {
             render()
@@ -64,12 +64,19 @@ class GameClient {
             up -> direction = Vec2i(0, -1)
             down -> direction = Vec2i(0, 1)
         }
+
+        event.preventDefault()
+
+        sendCommand()
     }
 
     private fun sendCommand() {
-        socket.send(JSON.stringify(ClientMessage(
-                clientCommand = ClientCommandMessage(direction)
-        )))
+        try {
+            socket.send(JSON.stringify(ClientMessage(
+                    clientCommand = ClientCommandMessage(direction)
+            )))
+        } catch (ex: Exception) {
+        }
     }
 
     private fun handleMessage(event: MessageEvent) {
@@ -90,12 +97,14 @@ class GameClient {
         worldState?.let { worldState ->
             worldState.snakes.forEach { snake ->
                 snake.segments.forEach { segment ->
+                    context.beginPath()
                     context.rect(
                             segment.x * segmentWidth,
                             segment.y * segmentHeight,
                             segmentWidth,
                             segmentHeight)
                     context.fill()
+                    context.closePath()
                 }
             }
         }

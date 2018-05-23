@@ -21,6 +21,8 @@ class GameWebSocketServer(
 
     override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
         println("closed " + conn.remoteSocketAddress + " with exit code " + code + " additional info: " + reason)
+        gameServer.handleEvent(ClientDisconnectedEvent(conn))
+
     }
 
     override fun onMessage(conn: WebSocket, message: String) {

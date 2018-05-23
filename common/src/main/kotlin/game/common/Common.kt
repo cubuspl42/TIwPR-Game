@@ -11,7 +11,15 @@ import kotlinx.serialization.Serializable
 expect fun getAnswer(): Int
 
 @Serializable
-data class Vec2i(val x: Int, val y: Int)
+data class Vec2i(val x: Int, val y: Int) {
+    operator fun plus(o: Vec2i) = Vec2i(x + o.x, y + o.y)
+
+    operator fun minus(o: Vec2i) = Vec2i(x - o.x, y - o.y)
+
+    operator fun unaryMinus() = Vec2i(-x, -y)
+
+    fun mod(n: Int) = Vec2i(x % n, y % n)
+}
 
 @Serializable
 data class HelloMessage(

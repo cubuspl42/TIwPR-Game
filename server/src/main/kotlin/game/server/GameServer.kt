@@ -14,22 +14,28 @@ data class ClientConnectedEvent(
         val socket: WebSocket
 ) : Event()
 
+data class ClientDisconnectedEvent(
+        val socket: WebSocket
+) : Event()
+
 data class ClientMessageEvent(
         val clientMessage: ClientMessage
 ) : Event()
 
-class Client(private val socket: WebSocket) {
+class Client(
+        val socket: WebSocket
+) {
     fun handleMessage(message: ServerMessage) {
-        socket.send(JSON.Companion.stringify(message))
+        socket.send(JSON.stringify(message))
     }
 }
 
 class GameServer : Runnable {
     private val clients = mutableSetOf<Client>()
 
-    private val eventQueue = ConcurrentLinkedQueue<Event>()
+    private val world = World()
 
-    private var worldState = WorldState(listOf(Snake(listOf(Vec2i(0, 0)))))
+    private val eventQueue = ConcurrentLinkedQueue<Event>()
 
     fun handleEvent(event: Event) {
         eventQueue.add(event)
@@ -56,22 +62,28 @@ class GameServer : Runnable {
             is ClientConnectedEvent -> {
                 clients.add(Client(event.socket))
             }
+            is ClientDisconnectedEvent -> {
+                clients.remove(findClientBySocket(event.socket))
+            }
             is ClientMessageEvent -> {
                 processMessage(event.clientMessage)
             }
         }
     }
 
+    private fun findClientBySocket(socket: WebSocket) =
+            clients.first { it.socket == socket }
+
     private fun processMessage(message: ClientMessage) {
     }
 
     private fun updateWorld() {
-
+        world.update()
     }
 
     private fun broadcastWorldState() {
         clients.forEach {
-            it.handleMessage(ServerMessage(WorldUpdateMessage(worldState.copy())))
+            it.handleMessage(ServerMessage(WorldUpdateMessage(world.dump())))
         }
     }
 }
