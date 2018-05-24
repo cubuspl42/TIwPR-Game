@@ -22,7 +22,12 @@ private const val down = 40
 private const val segmentWidth = 16.0
 private const val segmentHeight = segmentWidth
 
-class GameClient {
+
+private const val fruitOffset = 4.0
+private const val fruitWidth = 8.0
+private const val fruitHeight = fruitWidth
+
+class GameClient(private val worldId: Int) {
     private var worldState: WorldState? = null
 
     private var direction = Vec2i(0, 0)
@@ -45,9 +50,9 @@ class GameClient {
             handleMessage(event as MessageEvent)
         }
 
-//        socket.onopen = {
-//            window.setInterval({ sendCommand() }, 50)
-//        }
+        socket.onopen = {
+            sendMessage(ClientMessage(enteredWorld = EnteredWorldMessage(worldId)))
+        }
 
         fun callback() {
             render()
@@ -72,11 +77,15 @@ class GameClient {
 
     private fun sendCommand() {
         try {
-            socket.send(JSON.stringify(ClientMessage(
+            sendMessage(ClientMessage(
                     clientCommand = ClientCommandMessage(direction)
-            )))
+            ))
         } catch (ex: Exception) {
         }
+    }
+
+    private fun sendMessage(message: ClientMessage) {
+        socket.send(JSON.stringify(message))
     }
 
     private fun handleMessage(event: MessageEvent) {
@@ -98,6 +107,7 @@ class GameClient {
             worldState.snakes.forEach { snake ->
                 snake.segments.forEach { segment ->
                     context.beginPath()
+                    context.fillStyle = "darkgray"
                     context.rect(
                             segment.x * segmentWidth,
                             segment.y * segmentHeight,
@@ -107,6 +117,16 @@ class GameClient {
                     context.closePath()
                 }
             }
+
+            context.fillStyle = "blue"
+            context.beginPath()
+            context.rect(
+                    worldState.fruit.x * segmentWidth + fruitOffset,
+                    worldState.fruit.y * segmentHeight + fruitOffset,
+                    fruitWidth,
+                    fruitHeight)
+            context.fill()
+            context.closePath()
         }
     }
 }

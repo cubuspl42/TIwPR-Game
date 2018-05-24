@@ -25,7 +25,8 @@ data class ClientMessageEvent(
 
 class Client(
         val id: Int,
-        private val socket: WebSocket
+        private val socket: WebSocket,
+        var world: World? = null
 ) {
     fun handleMessage(message: ServerMessage) {
         socket.send(JSON.stringify(message))
@@ -35,7 +36,7 @@ class Client(
 class GameServer : Runnable {
     private val clients = mutableSetOf<Client>()
 
-    private val world = World()
+    private val worlds = (0 until worldCount).map { it to World(it) }.toMap()
 
     private val eventQueue = ConcurrentLinkedQueue<Event>()
 
@@ -46,7 +47,7 @@ class GameServer : Runnable {
     override fun run() {
         while (true) {
             processEvents()
-            updateWorld()
+            updateWorlds()
             broadcastWorldState()
 
             Thread.sleep((1000 / tickrate).toLong())
@@ -64,10 +65,11 @@ class GameServer : Runnable {
             is ClientConnectedEvent -> {
                 val client = Client(event.clientId, event.socket)
                 clients.add(client)
-                world.addSnake(client.id)
             }
             is ClientDisconnectedEvent -> {
-                clients.remove(findClientById(event.clientId))
+                val client = findClientById(event.clientId)
+                clients.remove(client)
+                client.world?.removeSnake(client)
             }
             is ClientMessageEvent -> {
                 processMessage(event.clientId, event.clientMessage)
@@ -79,18 +81,26 @@ class GameServer : Runnable {
             clients.first { it.id == id }
 
     private fun processMessage(clientId: Int, message: ClientMessage) {
+        val client = findClientById(clientId)
         message.clientCommand?.let {
-            world.controlSnake(clientId, it.direction)
+            client.world?.controlSnake(clientId, it.direction)
+        }
+        message.enteredWorld?.let {
+            val world = worlds[it.worldId]!!
+            client.world = world
+            world.addSnake(client)
         }
     }
 
-    private fun updateWorld() {
-        world.update()
+    private fun updateWorlds() {
+        worlds.forEach { _, world ->
+            world.update()
+        }
     }
 
     private fun broadcastWorldState() {
-        clients.forEach {
-            it.handleMessage(ServerMessage(WorldUpdateMessage(world.dump())))
+        worlds.forEach { _, world ->
+            world.broadcastState()
         }
     }
 }

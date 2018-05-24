@@ -10,6 +10,8 @@ import kotlinx.serialization.Serializable
  */
 expect fun getAnswer(): Int
 
+const val worldCount = 8
+
 @Serializable
 data class Vec2i(val x: Int, val y: Int) {
     operator fun plus(o: Vec2i) = Vec2i(x + o.x, y + o.y)
@@ -32,8 +34,14 @@ data class ClientCommandMessage(
 )
 
 @Serializable
+data class EnteredWorldMessage(
+        val worldId: Int
+)
+
+@Serializable
 data class ClientMessage(
         val hello: HelloMessage? = null,
+        val enteredWorld: EnteredWorldMessage? = null,
         val clientCommand: ClientCommandMessage? = null
 )
 
