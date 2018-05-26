@@ -27,7 +27,10 @@ private const val fruitOffset = 4.0
 private const val fruitWidth = 8.0
 private const val fruitHeight = fruitWidth
 
-class GameClient(private val worldId: Int) {
+class GameClient(
+        private val worldId: Int,
+        private val userUuid: String
+) {
     private var worldState: WorldState? = null
 
     private var direction = Vec2i(0, 0)
@@ -51,6 +54,7 @@ class GameClient(private val worldId: Int) {
         }
 
         socket.onopen = {
+            sendMessage(ClientMessage(hello = HelloMessage(userUuid)))
             sendMessage(ClientMessage(enteredWorld = EnteredWorldMessage(worldId)))
         }
 

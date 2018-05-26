@@ -19,11 +19,10 @@ class GameWebSocketServer(
 ) : WebSocketServer(address) {
     private var nextClientId = 0
 
+    private val clientMap = mutableMapOf<String, Int>()
+
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         println("new connection to " + conn.remoteSocketAddress)
-        val clientId = nextClientId++
-        conn.setAttachment(ConnectionState(clientId))
-        gameServer.handleEvent(ClientConnectedEvent(clientId, conn))
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
@@ -33,10 +32,22 @@ class GameWebSocketServer(
 
     }
 
-    override fun onMessage(conn: WebSocket, message: String) {
-        println("received message from " + conn.remoteSocketAddress + ": " + message)
-        val connectionState = conn.getAttachment<ConnectionState>()
-        gameServer.handleEvent(ClientMessageEvent(connectionState.clientId, JSON.parse(message)))
+    override fun onMessage(conn: WebSocket, messageJson: String) {
+        println("received message from " + conn.remoteSocketAddress + ": " + messageJson)
+
+        val clientMessage = JSON.parse<ClientMessage>(messageJson)
+        val hello = clientMessage.hello
+
+        if (hello != null) {
+            val clientId = clientMap.getOrPut(hello.userUuid) {nextClientId++}
+            conn.setAttachment(ConnectionState(clientId))
+            gameServer.handleEvent(ClientConnectedEvent(clientId, conn))
+        }
+
+        conn.getAttachment<ConnectionState>()?.let {
+            val event = ClientMessageEvent(it.clientId, clientMessage)
+            gameServer.handleEvent(event)
+        }
     }
 
     override fun onMessage(conn: WebSocket, message: ByteBuffer) {

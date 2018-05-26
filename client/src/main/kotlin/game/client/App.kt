@@ -9,7 +9,8 @@ import kotlinx.html.li
 import org.w3c.dom.HTMLElement
 
 class App(
-       private val wrapper: HTMLElement
+       private val wrapper: HTMLElement,
+       private val userUuid: String
 ) {
     private val ul = wrapper.append.ul {
         repeat(worldCount) { worldId ->
@@ -24,6 +25,6 @@ class App(
 
     private fun enterWorld(worldId: Int) {
         ul.remove()
-        wrapper.append(GameClient(worldId).canvas)
+        wrapper.append(GameClient(worldId, userUuid).canvas)
     }
 }

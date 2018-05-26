@@ -16,7 +16,7 @@ class World(val worldId: Int) {
     private val snakes = mutableListOf<Snake>()
 
     private var fruit = randomPosition()
-    
+
     private fun randomPosition() = Vec2i(rand.nextInt(worldWidth), rand.nextInt(worldHeight))
 
     fun addSnake(client: Client) {
